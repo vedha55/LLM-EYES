@@ -4,6 +4,7 @@ go 1.25.3
 
 require (
 	github.com/google/generative-ai-go v0.20.1
+	github.com/gorilla/websocket v1.5.3
 	github.com/joho/godotenv v1.5.1
 	github.com/livekit/protocol v1.42.3-0.20251023002554-070839e4cae7
 	github.com/livekit/server-sdk-go/v2 v2.12.8
@@ -39,7 +40,6 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.7 // indirect
 	github.com/googleapis/gax-go/v2 v2.15.0 // indirect
-	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/jxskiss/base62 v1.1.0 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect

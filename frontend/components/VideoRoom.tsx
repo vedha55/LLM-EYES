@@ -19,6 +19,7 @@ interface ChatMessage {
   role: 'user' | 'ai'
   content: string
   timestamp: Date
+  isStreaming?: boolean  // true while AI is still typing
 }
 
 interface SubtitleData {
@@ -31,18 +32,33 @@ interface TokenResponse {
   room: string
 }
 
+interface ModelInfo {
+  id: string
+  name: string
+  provider: string
+  description: string
+}
+
+interface ModelsResponse {
+  models: ModelInfo[]
+  current: string
+}
+
 interface RoomContentProps {
   onSubtitleUpdate: React.Dispatch<React.SetStateAction<SubtitleData>>
-  onAddMessage: (message: ChatMessage) => void
+  setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>
   sendChatRef: React.MutableRefObject<((msg: string) => void) | null>
+  currentModel: string
+  apiBaseUrl: string
 }
 
 // Inner component: operates within Room context
-function RoomContent({ onSubtitleUpdate, onAddMessage, sendChatRef }: RoomContentProps) {
+function RoomContent({ onSubtitleUpdate, setMessages, sendChatRef, currentModel, apiBaseUrl }: RoomContentProps) {
   const room = useRoomContext()
   const connectionState = useConnectionState()
   const videoElementRef = useRef<HTMLVideoElement | null>(null)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
+  const frameIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
   // Find video source (screen share takes priority)
   const findVideoSource = useCallback((): HTMLVideoElement | null => {
@@ -116,6 +132,9 @@ function RoomContent({ onSubtitleUpdate, onAddMessage, sendChatRef }: RoomConten
     sendChatRef.current = sendChat
   }, [sendChat, sendChatRef])
 
+  // Track streaming messages by seqNum
+  const streamingMessagesRef = useRef<Map<number, string>>(new Map())
+
   // DataChannel receive handler
   const handleDataReceived = useCallback((payload: Uint8Array) => {
     try {
@@ -125,17 +144,109 @@ function RoomContent({ onSubtitleUpdate, onAddMessage, sendChatRef }: RoomConten
 
       console.log('📥 Data received:', data)
 
+      // Handle streaming chunks
+      if (data.type === 'chat_stream') {
+        const seqNum = data.seqNum || 0
+
+        if (data.isFinal) {
+          // Streaming complete - mark message as not streaming
+          streamingMessagesRef.current.delete(seqNum)
+          setMessages(prev => {
+            // Find and update the streaming message to mark as complete
+            return prev.map((msg, idx) =>
+              msg.isStreaming && idx === prev.length - 1
+                ? { ...msg, isStreaming: false }
+                : msg
+            )
+          })
+        } else if (data.text) {
+          // Append chunk to existing message or create new one
+          const existingText = streamingMessagesRef.current.get(seqNum) || ''
+          const newText = existingText + data.text
+          streamingMessagesRef.current.set(seqNum, newText)
+
+          setMessages(prev => {
+            // Check if last message is streaming AI message
+            const lastMsg = prev[prev.length - 1]
+            if (lastMsg?.role === 'ai' && lastMsg?.isStreaming) {
+              // Update existing streaming message
+              return [
+                ...prev.slice(0, -1),
+                { ...lastMsg, content: newText }
+              ]
+            } else {
+              // Create new streaming message
+              return [
+                ...prev,
+                {
+                  role: 'ai' as const,
+                  content: newText,
+                  timestamp: new Date(),
+                  isStreaming: true
+                }
+              ]
+            }
+          })
+        }
+        return
+      }
+
+      // Handle legacy non-streaming response
       if (data.type === 'chat' && data.text) {
-        onAddMessage({
-          role: 'ai',
-          content: data.text,
-          timestamp: new Date()
-        })
+        setMessages(prev => [
+          ...prev,
+          {
+            role: 'ai' as const,
+            content: data.text,
+            timestamp: new Date()
+          }
+        ])
       }
     } catch (error) {
       console.error('Error parsing data channel message:', error)
     }
-  }, [onAddMessage])
+  }, [setMessages])
+
+  // Send frame to backend for streaming mode
+  const sendFrame = useCallback(async () => {
+    const dataUrl = captureImage()
+    if (!dataUrl) return
+
+    try {
+      await fetch(`${apiBaseUrl}/api/frame`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ frame: dataUrl })
+      })
+    } catch (err) {
+      // Silently ignore frame errors
+    }
+  }, [captureImage, apiBaseUrl])
+
+  // Start/stop frame streaming based on model
+  useEffect(() => {
+    const isStreamingModel = currentModel === 'gemini-live-streaming'
+
+    if (isStreamingModel && connectionState === ConnectionState.Connected) {
+      console.log('🎬 Starting 1 FPS frame streaming...')
+      // Send frames at 1 FPS
+      frameIntervalRef.current = setInterval(sendFrame, 1000)
+      onSubtitleUpdate(prev => ({ ...prev, status: 'Connected - Streaming 1 FPS' }))
+    } else {
+      if (frameIntervalRef.current) {
+        console.log('🛑 Stopping frame streaming')
+        clearInterval(frameIntervalRef.current)
+        frameIntervalRef.current = null
+      }
+    }
+
+    return () => {
+      if (frameIntervalRef.current) {
+        clearInterval(frameIntervalRef.current)
+        frameIntervalRef.current = null
+      }
+    }
+  }, [currentModel, connectionState, sendFrame, onSubtitleUpdate])
 
   // Register DataChannel listener on room connection
   useEffect(() => {
@@ -144,14 +255,18 @@ function RoomContent({ onSubtitleUpdate, onAddMessage, sendChatRef }: RoomConten
     }
 
     console.log('✅ Connected to room:', room.name)
-    onSubtitleUpdate(prev => ({ ...prev, status: 'Connected - Ask a question' }))
+    const isStreamingModel = currentModel === 'gemini-live-streaming'
+    onSubtitleUpdate(prev => ({
+      ...prev,
+      status: isStreamingModel ? 'Connected - Streaming 1 FPS' : 'Connected - Ask a question'
+    }))
 
     room.on(RoomEvent.DataReceived, handleDataReceived)
 
     return () => {
       room.off(RoomEvent.DataReceived, handleDataReceived)
     }
-  }, [connectionState, room, handleDataReceived, onSubtitleUpdate])
+  }, [connectionState, room, handleDataReceived, onSubtitleUpdate, currentModel])
 
   return <VideoConference />
 }
@@ -166,8 +281,14 @@ export default function VideoRoom() {
   const sendChatRef = useRef<((msg: string) => void) | null>(null)
   const chatContainerRef = useRef<HTMLDivElement | null>(null)
 
+  // Model state
+  const [models, setModels] = useState<ModelInfo[]>([])
+  const [currentModel, setCurrentModel] = useState<string>('')
+  const [isSwitchingModel, setIsSwitchingModel] = useState(false)
+
   const liveKitUrl = process.env.NEXT_PUBLIC_LIVEKIT_URL
   const tokenApiUrl = process.env.NEXT_PUBLIC_TOKEN_API_URL || 'http://localhost:8080/api/token'
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080'
 
   // Add message to chat history
   const addMessage = useCallback((message: ChatMessage) => {
@@ -204,7 +325,48 @@ export default function VideoRoom() {
     }
   }
 
-  // Fetch token
+  // Fetch models
+  const fetchModels = useCallback(async () => {
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/models`)
+      if (response.ok) {
+        const data: ModelsResponse = await response.json()
+        setModels(data.models || [])
+        setCurrentModel(data.current || '')
+      }
+    } catch (err) {
+      console.error('Failed to fetch models:', err)
+    }
+  }, [apiBaseUrl])
+
+  // Switch model
+  const switchModel = useCallback(async (modelId: string) => {
+    if (modelId === currentModel || isSwitchingModel) return
+
+    setIsSwitchingModel(true)
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/models/switch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model_id: modelId })
+      })
+
+      if (response.ok) {
+        setCurrentModel(modelId)
+        setMessages([]) // Clear chat history on model switch
+        console.log('🔄 Model switched to:', modelId)
+      } else {
+        const errorText = await response.text()
+        console.error('Failed to switch model:', errorText)
+      }
+    } catch (err) {
+      console.error('Failed to switch model:', err)
+    } finally {
+      setIsSwitchingModel(false)
+    }
+  }, [apiBaseUrl, currentModel, isSwitchingModel])
+
+  // Fetch token and models
   useEffect(() => {
     const fetchToken = async () => {
       if (!liveKitUrl) {
@@ -221,6 +383,9 @@ export default function VideoRoom() {
         const data: TokenResponse = await response.json()
         console.log('🎫 Token received for:', data.identity)
         setToken(data.token)
+
+        // Fetch available models
+        await fetchModels()
       } catch (err) {
         console.error('Failed to fetch token:', err)
         setError(`Failed to fetch token. Make sure the backend server is running.\n\n${err}`)
@@ -230,7 +395,7 @@ export default function VideoRoom() {
     }
 
     fetchToken()
-  }, [liveKitUrl, tokenApiUrl])
+  }, [liveKitUrl, tokenApiUrl, fetchModels])
 
   // Loading state
   if (isLoading) {
@@ -285,15 +450,41 @@ go run cmd/bot/main.go`}
       >
         <RoomContent
           onSubtitleUpdate={setSubtitle}
-          onAddMessage={addMessage}
+          setMessages={setMessages}
           sendChatRef={sendChatRef}
+          currentModel={currentModel}
+          apiBaseUrl={apiBaseUrl}
         />
       </LiveKitRoom>
 
-      {/* Status */}
-      <div className="mt-4 flex items-center gap-2">
-        <div className={`w-2 h-2 rounded-full ${subtitle.status.includes('Connected') ? 'bg-green-500' : 'bg-yellow-500'}`} />
-        <span className="text-sm text-gray-400">{subtitle.status}</span>
+      {/* Status & Model Selector */}
+      <div className="mt-4 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className={`w-2 h-2 rounded-full ${subtitle.status.includes('Connected') ? 'bg-green-500' : 'bg-yellow-500'}`} />
+          <span className="text-sm text-gray-400">{subtitle.status}</span>
+        </div>
+
+        {/* Model Selector */}
+        {models.length > 0 && (
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-400">Model:</span>
+            <select
+              value={currentModel}
+              onChange={(e) => switchModel(e.target.value)}
+              disabled={isSwitchingModel}
+              className="px-3 py-1.5 bg-gray-700 border border-gray-600 rounded text-white text-sm focus:outline-none focus:border-blue-500 disabled:opacity-50"
+            >
+              {models.map((model) => (
+                <option key={model.id} value={model.id}>
+                  {model.name} ({model.provider})
+                </option>
+              ))}
+            </select>
+            {isSwitchingModel && (
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Chat History */}
@@ -319,8 +510,12 @@ go run cmd/bot/main.go`}
                 >
                   <div className="text-xs opacity-70 mb-1">
                     {msg.role === 'user' ? '👤 You' : '🤖 AI'}
+                    {msg.isStreaming && <span className="ml-2 text-green-400">typing...</span>}
                   </div>
-                  <div>{msg.content}</div>
+                  <div>
+                    {msg.content}
+                    {msg.isStreaming && <span className="inline-block w-2 h-4 ml-1 bg-green-400 animate-pulse" />}
+                  </div>
                 </div>
               </div>
             ))}
